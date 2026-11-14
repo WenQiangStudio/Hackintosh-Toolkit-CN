@@ -1,0 +1,22 @@
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# 工具运行时产物
+tools/OpCore-Simplify/Report.json
+tools/OpCore-Simplify/ACPI/
+tools/OpCore-Simplify/EFI/
+tools/OpCore-Simplify/.cache/
+tools/gibMacOS/output/
+tools/gibMacOS/macOS Downloads/
+
+# 本地临时文件
+*.log
+.write_test
