@@ -2,7 +2,7 @@
 
 一套自带工具、按机型分类的 Hackintosh（黑苹果）安装资料包。目标只有一个：**让你少走弯路，先判断能不能装，再决定怎么装。**
 
-- 工具：`OpCore-Simplify`（自动生成 OpenCore EFI）+ `gibMacOS`（从苹果服务器下载镜像）
+- 工具：`hk` 命令行判定器 + `OpCore-Simplify`（自动生成 EFI）+ `gibMacOS`（下载镜像）
 - 教程：办公笔记本 / 游戏电脑 / 全能本 / 服务器，四条独立路线
 - 附带：兼容性速查表、BIOS 设置对照、故障速查、安装后驱动微调
 
@@ -27,6 +27,35 @@
 | **无线网卡** | Broadcom BCM94360 系列（免驱，隔空投送全功能）、Intel 网卡（能上网，但无隔空投送） | 部分 Realtek / 高通网卡无解，需换卡或买 USB 网卡 |
 
 > 拿不准就跑一遍 `tools/OpCore-Simplify`，它会直接给你的每个硬件标绿灯/红灯。
+
+---
+
+## ⚡ 先跑一句：`hk` 判定
+
+v2.0 起自带一个命令行工具，**零依赖、离线可用**，直接告诉你这台机器能不能装。
+
+```bash
+python -m hk check --cpu i5-10210U --gpu "UHD 620" --gpu MX250 --wifi AX201 --storage nvme
+```
+
+```
+判定结果
+  可以装，建议 macOS Tahoe；范围 10.13 – 26
+
+  ✅ CPU｜i5-10210U
+  ✅ 显卡｜UHD 620
+  ⚠️  显卡｜MX250（将被禁用）→ 在 EFI 里加 disable-gpu
+  ⚠️  无线｜AX201 → 想用隔空投送就换 Broadcom 卡
+```
+
+判完直接出计划：
+
+```bash
+python -m hk plan --platform laptop --cpu i5-10210U --gpu "UHD 620"
+```
+
+其它子命令：`bios`（BIOS 清单）、`troubleshoot`（按现象查）、`matrix`（兼容速查）、`usb`（U 盘清单）。
+完整用法见 [docs/08-cli.md](docs/08-cli.md)。Windows 上双击 `hk.bat` 也行。
 
 ---
 
@@ -70,6 +99,14 @@
 ```
 Hackintosh-Toolkit-CN/
 ├── README.md                  ← 你在这里
+├── hk/                        # 命令行工具（v2.0 新增，零依赖）
+│   ├── checker.py             判定引擎：能不能装、装到哪个版本
+│   ├── data.py                兼容性数据表（CPU/显卡/网卡/平台）
+│   ├── planner.py             按机型生成安装计划
+│   ├── bios.py                BIOS 清单与故障速查数据
+│   └── cli.py                 命令行入口
+├── tests/
+│   └── test_hk.py             26 项单元测试（GitHub Actions 三个平台跑）
 ├── docs/
 │   ├── 00-prepare.md          准备工作 + 生成 EFI
 │   ├── 01-office-laptop.md    办公笔记本
@@ -79,12 +116,16 @@ Hackintosh-Toolkit-CN/
 │   ├── 05-bios.md             BIOS 设置对照表
 │   ├── 06-troubleshooting.md  故障速查
 │   ├── 07-post-install.md     安装后优化
+│   ├── 08-cli.md              命令行工具用法
 │   └── hardware-matrix.md     硬件兼容速查
 ├── scripts/
-│   └── check_env.py           环境自检（Python 版本、路径、文件完整性）
-└── tools/
-    ├── OpCore-Simplify/       自动生成 OpenCore EFI
-    └── gibMacOS/              下载 macOS 安装镜像
+│   ├── check_env.py           环境自检
+│   └── package_release.py     打包发布
+├── tools/
+│   ├── OpCore-Simplify/       自动生成 OpenCore EFI
+│   └── gibMacOS/              下载 macOS 安装镜像
+├── hk.bat                     Windows 下调用 hk
+└── start.bat                  一键入口（自检 + 生成 EFI）
 ```
 
 ---

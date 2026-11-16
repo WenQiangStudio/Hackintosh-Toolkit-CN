@@ -1,0 +1,48 @@
+# 这是 GitHub Actions 的 CI 配置，但放在了 ci/ 下而不是 .github/workflows/。
+#
+# 原因：推送时需要 OAuth App 具备 workflow 权限，本项目发布时没开。
+# 想启用，复制到工作流目录即可，之后每次 push 会自动跑：
+#
+#     mkdir -p .github/workflows
+#     cp ci/github-actions.yml .github/workflows/ci.yml
+#
+# 没启用的这段时间，本地跑同样有效：
+#     python -m unittest discover -s tests -v
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: ${{ matrix.os }} · Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.9", "3.12"]
+    env:
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: 单元测试
+        run: python -m unittest discover -s tests -v
+
+      - name: CLI 冒烟测试（判定）
+        run: python -m hk check --cpu i5-10400 --gpu "RX 6600" --storage sata --platform desktop
+
+      - name: CLI 冒烟测试（计划）
+        run: python -m hk plan --platform laptop --cpu "i5-10210U" --gpu "UHD 620" --gpu "MX250"
+
+      - name: 发布包完整性
+        run: python scripts/package_release.py --check
