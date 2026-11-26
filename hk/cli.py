@@ -176,6 +176,89 @@ def cmd_usb(a):
     print("  sudo /Applications/Install\\ macOS\\ Sonoma.app/Contents/Resources/createinstallmedia --volume /Volumes/USB")
 
 
+def cmd_detect(a):
+    from .detect import detect, to_hardware
+
+    d = detect()
+    print()
+    print(_c("自动检测结果", 1))
+    rows = [("系统", f"{d.get('os')} / {d.get('arch')}"),
+            ("CPU", d.get("cpu") or "未检测到"),
+            ("显卡", ", ".join(d.get("gpus") or []) or "未检测到"),
+            ("内存", f"{d.get('memory_gb')} GB" if d.get("memory_gb") else "未检测到"),
+            ("存储", d.get("storage") or "未检测到"),
+            ("机型", d.get("platform"))]
+    for k, v in rows:
+        print(f"  {k:6s}{v}")
+    for n in d.get("notes") or []:
+        print(f"  {_c('提示', 33)}：{n}")
+
+    if not a.no_check:
+        v = check(to_hardware(d))
+        print()
+        print("  " + _c(v.headline, 32 if v.ok else 31))
+        for f in v.findings:
+            mark = {"ok": _c("✅", 32), "warn": _c("⚠️ ", 33), "fail": _c("❌", 31)}[f.level]
+            print(f"  {mark} {f.part}｜{f.title}")
+
+
+def cmd_doctor(a):
+    from . import doctor
+
+    items = doctor.run(with_network=not a.offline)
+    print()
+    print(_c("环境体检", 1))
+    for it in items:
+        mark = {"ok": _c("✅", 32), "warn": _c("⚠️ ", 33), "fail": _c("❌", 31)}[it["level"]]
+        line = f"  {mark} {it['title']}"
+        if it["detail"]:
+            line += f"：{it['detail']}"
+        print(line)
+        if it["fix"]:
+            print(f"       → {it['fix']}")
+    print()
+    print("  " + doctor.summary(items))
+
+
+def cmd_auto(a):
+    from . import auto as auto_mod
+
+    print(_c("正在检测硬件…", 36))
+    result = auto_mod.run(write_report=not a.no_report, with_network=a.network)
+    d = result["detected"]
+    v = result["verdict"]
+
+    print()
+    print(_c("检测到", 1))
+    print(f"  {d.get('os')} / {d.get('arch')}　{d.get('cpu') or 'CPU 未识别'}")
+    print(f"  显卡：{', '.join(d.get('gpus') or []) or '未识别'}")
+    print(f"  内存：{d.get('memory_gb') or '?'} GB　存储：{d.get('storage') or '未识别'}")
+
+    print()
+    print(_c("结论", 1))
+    print("  " + _c(v["headline"], 32 if v["ok"] else 31))
+    for f in v["findings"]:
+        if f["level"] == "ok":
+            continue
+        mark = _c("⚠️ ", 33) if f["level"] == "warn" else _c("❌", 31)
+        print(f"  {mark} {f['part']}｜{f['title']}" + (f" → {f['fix']}" if f["fix"] else ""))
+
+    print()
+    print(f"安装计划共 {len(result['steps'])} 步，环境体检：{doctor_summary(result['env'])}")
+    if result["report"]:
+        print(f"报告已写入：{_c(result['report'], 36)}")
+
+
+def doctor_summary(items):
+    from . import doctor as d
+    return d.summary(items)
+
+
+def cmd_serve(a):
+    from .server import serve as serve_ui
+    serve_ui(host=a.host, port=a.port, open_browser=a.open)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(
         prog="hk", description="黑苹果可行性判定与安装计划（离线、零依赖）")
@@ -213,6 +296,25 @@ def main(argv=None):
 
     p_u = sub.add_parser("usb", help="U 盘制作清单")
     p_u.set_defaults(func=cmd_usb)
+
+    p_d = sub.add_parser("detect", help="自动检测本机硬件")
+    p_d.add_argument("--no-check", action="store_true", help="只检测，不判定")
+    p_d.set_defaults(func=cmd_detect)
+
+    p_doc = sub.add_parser("doctor", help="环境体检")
+    p_doc.add_argument("--offline", action="store_true", help="跳过网络检查")
+    p_doc.set_defaults(func=cmd_doctor)
+
+    p_a = sub.add_parser("auto", help="一键：检测 + 判定 + 计划 + 报告")
+    p_a.add_argument("--no-report", action="store_true", help="不写报告文件")
+    p_a.add_argument("--network", action="store_true", help="体检时也检查网络")
+    p_a.set_defaults(func=cmd_auto)
+
+    p_s = sub.add_parser("serve", help="启动本地 Web 界面")
+    p_s.add_argument("--host", default="127.0.0.1")
+    p_s.add_argument("--port", type=int, default=8765)
+    p_s.add_argument("--open", action="store_true", help="自动打开浏览器")
+    p_s.set_defaults(func=cmd_serve)
 
     args = ap.parse_args(argv)
     args.func(args)

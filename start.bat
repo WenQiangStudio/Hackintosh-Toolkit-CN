@@ -27,6 +27,9 @@ echo   [2] 硬件判定          告诉我这台机器能不能装
 echo   [3] 生成 EFI          启动 OpCore-Simplify
 echo   [4] BIOS 清单         按品牌列必改项
 echo   [5] 故障速查          按现象查
+echo   [6] 一键自动化        自动检测 + 判定 + 计划 + 报告
+echo   [7] 网页界面          在浏览器里点选（三种主题）
+echo   [8] 环境体检          检查 Python、路径、磁盘、网络
 echo   [0] 退出
 echo.
 set /p CHOICE=请选择：
@@ -36,6 +39,9 @@ if "%CHOICE%"=="2" goto check
 if "%CHOICE%"=="3" goto efi
 if "%CHOICE%"=="4" goto bios
 if "%CHOICE%"=="5" goto trouble
+if "%CHOICE%"=="6" goto auto
+if "%CHOICE%"=="7" goto webui
+if "%CHOICE%"=="8" goto doctor
 if "%CHOICE%"=="0" exit /b 0
 goto menu
 
@@ -89,6 +95,32 @@ goto menu
 cls
 set /p KW=现象关键词（如 黑屏 / 禁行 / 没声音，直接回车看全部）：
 python -m hk troubleshoot %KW%
+echo.
+pause
+goto menu
+
+:auto
+cls
+echo [*] 正在检测硬件并生成报告，稍等…
+echo.
+python -m hk auto
+echo.
+pause
+goto menu
+
+:webui
+cls
+echo [*] 启动网页界面，浏览器会打开 http://127.0.0.1:8765
+echo     关闭这个窗口即停止服务。
+echo.
+python -m hk serve --open
+echo.
+pause
+goto menu
+
+:doctor
+cls
+python -m hk doctor
 echo.
 pause
 goto menu

@@ -59,6 +59,43 @@ python -m hk plan --platform laptop --cpu i5-10210U --gpu "UHD 620"
 
 ---
 
+## 🤖 自动化：一条命令到底
+
+v2.1 起不用一步步敲了：
+
+```bash
+python -m hk auto
+```
+
+自动检测硬件 → 判定能不能装 → 生成安装计划 → 在 `reports/` 写一份 Markdown 报告。
+Windows 上双击 `hk.bat`，选 `[6]` 也是同一个流程。
+
+想分开用：
+
+| 命令 | 作用 |
+|---|---|
+| `python -m hk detect` | 只检测本机硬件 |
+| `python -m hk doctor` | 环境体检（Python、路径、磁盘、网络） |
+| `python -m hk serve` | 打开网页界面 |
+
+---
+
+## 🖥️ 网页界面
+
+```bash
+python -m hk serve     # 然后打开 http://127.0.0.1:8765
+```
+
+三种主题随时切：**白色 / 黑色 / 科技风**（科技风是动态渐变 + 玻璃卡片）。
+填硬件、点判定、看红绿灯，比对着终端输出舒服得多。
+
+- 只监听本机，同网段扫不到
+- 单文件、零外链，断网也能用
+
+详见 [docs/09-automation.md](docs/09-automation.md)。
+
+---
+
 ## 🧭 我该看哪一篇？
 
 | 你的电脑 | 典型例子 | 难度 | 推荐度 | 教程 |
@@ -99,11 +136,16 @@ python -m hk plan --platform laptop --cpu i5-10210U --gpu "UHD 620"
 ```
 Hackintosh-Toolkit-CN/
 ├── README.md                  ← 你在这里
-├── hk/                        # 命令行工具（v2.0 新增，零依赖）
+├── hk/                        # 命令行工具（零依赖）
 │   ├── checker.py             判定引擎：能不能装、装到哪个版本
 │   ├── data.py                兼容性数据表（CPU/显卡/网卡/平台）
 │   ├── planner.py             按机型生成安装计划
 │   ├── bios.py                BIOS 清单与故障速查数据
+│   ├── detect.py              自动检测本机硬件（跨平台）
+│   ├── doctor.py              环境体检
+│   ├── auto.py                一键流程 + 报告生成
+│   ├── server.py              本地 Web 服务（含 JSON 接口）
+│   ├── webui/index.html       网页界面（单文件，三主题）
 │   └── cli.py                 命令行入口
 ├── tests/
 │   └── test_hk.py             26 项单元测试（GitHub Actions 三个平台跑）

@@ -28,6 +28,12 @@ REQUIRED = [
     "tools/gibMacOS/gibMacOS.py",
     "docs/00-prepare.md",
     "docs/hardware-matrix.md",
+    "docs/09-automation.md",
+    "hk/detect.py",
+    "hk/doctor.py",
+    "hk/auto.py",
+    "hk/server.py",
+    "hk/webui/index.html",
 ]
 
 SKIP_DIRS = {".git", "__pycache__", "dist", ".github", "tests"}
